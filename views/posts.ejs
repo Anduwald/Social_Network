@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <%- include("partials/head.ejs") %>
+  <body>
+    <div class="container">
+      <%- include("partials/navbar.ejs") %>
+
+      <h1>Posts</h1>
+      <p>Total count: <%- posts.length %></p>
+      <table class="table table-striped">
+        <thead class="thead-dark">
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Title</th>
+            <th scope="col">Author</th>
+            <th scope="col">Category</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% posts.forEach(function(post) { %>
+          <tr>
+            <td><%- post["id"] %></td>
+            <td><%- post["title"] %></td>
+            <td><%- post["author"] %></td>
+            <td><%- post["category"] %></td>
+            <td>
+              <a
+                href="/posts/<%- post['id'] %>/show"
+                class="btn btn-primary mt-1"
+                >Show</a
+              >
+              <a
+                href="/posts/<%- post['id'] %>/edit"
+                class="btn btn-success mt-1"
+                >Edit</a
+              >
+              <a
+                href="/posts/<%- post['id'] %>/delete"
+                class="btn btn-danger mt-1"
+                >Delete</a
+              >
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <a href="/new_post" class="btn btn-success">Create New Post</a>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/jquery/jquery.min.js"></script>
+    <script src="/bootstrap/js/bootstrap.min.js"></script>
+  </body>
+</html>

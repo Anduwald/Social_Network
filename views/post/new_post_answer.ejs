@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <%- include("partials/head.ejs") %>
+  <body>
+    <div class="container">
+      <%- include("partials/navbar.ejs") %>
+
+      <nav class="navbar pt-0">
+        <div class="container-fluid bg-success rounded-2 bg-opacity-10">
+          <span class="navbar-text text-success fw-semibold m-1">
+            New post is created!
+          </span>
+        </div>
+      </nav>
+
+      <p>Title: <%- formData.title %></p>
+      <p>Category: <%- formData.author %></p>
+      <p>Category: <%- formData.category %></p>
+      <p>Body: <%- formData.body %></p>
+      <a href="/posts">See all posts</a>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/jquery/jquery.min.js"></script>
+    <script src="/bootstrap/js/bootstrap.min.js"></script>
+  </body>
+</html>
