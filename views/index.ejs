@@ -4,16 +4,10 @@
   <body>
     <div class="container">
       <%- include("partials/navbar.ejs") %>
-
-      <div class="jumbotron">
-        <h1 class="display-4">My blog</h1>
-        <p class="lead">This is a Node Js based blog.</p>
-        <hr class="my-4" />
-        <p>To add new posts, please login.</p>
-        <a class="btn btn-primary btn-lg" href="/login" role="button">Login</a>
-      </div>
+      <h1>Profile</h1>
+      <img class="avatar" src="/img/<%- currentUser.avatar_name %>" alt="" />
+      <h5><%- currentUser.name %> <%- currentUser.surname %></h5>
     </div>
-
     <!-- JavaScript -->
     <script src="/jquery/jquery.min.js"></script>
     <script src="/bootstrap/js/bootstrap.min.js"></script>

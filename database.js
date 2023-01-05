@@ -14,8 +14,7 @@ const db = new sqlite3.Database(DBSOURCE, (err) => {
       `CREATE TABLE post (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title text,
-      author text,
-      category text,
+      user_id text,
       body text
       )`,
       (err) => {
@@ -47,9 +46,10 @@ const db = new sqlite3.Database(DBSOURCE, (err) => {
       `CREATE TABLE user (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name text,
+      surname text,
+      avatar_name text,
       email text UNIQUE,
       password text,
-      failed_logins INTEGER,
       CONSTRAINT email_unique UNIQUE (email)
       )`,
       (err) => {

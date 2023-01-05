@@ -13,7 +13,8 @@ const db = require("./database.js");
 const bcrypt = require("bcrypt");
 const session = require("express-session");
 const path = require("path");
-
+const fileUpload = require("express-fileupload");
+const { v4: uuidv4 } = require("uuid");
 // Configuration for server
 app.set("view engine", "ejs");
 app.set("views", [
@@ -27,12 +28,14 @@ app.use(
   })
 );
 app.use("/css", express.static(__dirname + "/css"));
+app.use("/img", express.static(__dirname + "/img"));
 app.use(
   "/bootstrap",
   express.static(__dirname + "/node_modules/bootstrap/dist")
 );
 app.use("/jquery", express.static(__dirname + "/node_modules/jquery/dist/"));
 app.use(express.urlencoded());
+app.use(fileUpload());
 // End of configuration for server
 
 //Function for auth users
@@ -64,7 +67,7 @@ function checkAuth(req, res, next) {
 //End of Function for auth users
 
 // -> Routes for pages in nav
-app.get("/", function (req, res) {
+app.get("/", checkAuth, function (req, res) {
   res.render("index", { activePage: "home" });
 });
 
@@ -219,15 +222,11 @@ app.post("/login", function (req, res) {
   var params = [req.body.email];
   var error = "";
   db.get(sql, params, (err, row) => {
-    console.log(row);
     if (err) {
       error = err.message;
     }
     if (row === undefined) {
       error = "Wrong email or password";
-    }
-    if (row["failed_logins"] + 1 === 3) {
-      error = "Your account blocked";
     }
     if (error !== "") {
       res.render("login", { activePage: "login", error: error });
@@ -237,20 +236,7 @@ app.post("/login", function (req, res) {
     bcrypt.compare(req.body.password, row["password"], function (err, hashRes) {
       if (hashRes === false) {
         error = "Wrong email or password";
-        let failed_count = Number(row["failed_logins"]) + 1;
         var data = [failed_count, req.body.email];
-        db.run(
-          `UPDATE user SET failed_logins = ? WHERE email = ?`,
-          data,
-          function (err, result) {
-            if (err) {
-              res.status(400);
-              res.send("database error:" + err.message);
-              return;
-            }
-          }
-        );
-
         res.render("login", { activePage: "login", error: error });
         return;
       }
@@ -268,20 +254,40 @@ app.get("/register", function (req, res) {
 
 app.post("/register", function (req, res) {
   let error = "";
+  const { image } = req.files;
+  const imgType = image.mimetype.replace(/image\//g, "");
+
+  if (imgType != "gif" && imgType != "png" && imgType != "jpg") {
+    error = "Please check file type it should be png/gif/jpg !";
+    res.status(400);
+    res.render("register", { activePage: "register", error: error });
+    return;
+  }
+  let newImgName = `${uuidv4()}.${imgType}`;
+
   bcrypt.hash(req.body.password, 10, function (err, hash) {
     var sql =
-      "INSERT INTO user (name, email, password, failed_logins) VALUES (?,?,?,0)";
-    var data = [req.body.name, req.body.email, hash];
-    db.run(sql, data, function (err, result) {
+      "INSERT INTO user (name, surname, avatar_name, email, password) VALUES (?,?,?,?,?)";
+    var data = [
+      req.body.name,
+      req.body.surname,
+      newImgName,
+      req.body.email,
+      hash,
+    ];
+    db.all(sql, data, function (err, result) {
       if (err) {
         error = "Email already used !";
         res.status(400);
         res.render("register", { activePage: "register", error: error });
         return;
       }
+
+      image.mv(__dirname + `/img/${newImgName}`);
       res.render("user/register_answer", {
         activePage: "register",
         formData: req.body,
+        imgName: newImgName,
         error: error,
       });
     });
