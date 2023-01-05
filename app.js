@@ -15,13 +15,9 @@ const session = require("express-session");
 const path = require("path");
 const fileUpload = require("express-fileupload");
 const { v4: uuidv4 } = require("uuid");
+
 // Configuration for server
 app.set("view engine", "ejs");
-app.set("views", [
-  path.join(__dirname, "views"),
-  path.join(__dirname, "views/patials/"),
-]);
-
 app.use(
   session({
     secret: "randomly generated secret",
@@ -36,6 +32,7 @@ app.use(
 app.use("/jquery", express.static(__dirname + "/node_modules/jquery/dist/"));
 app.use(express.urlencoded());
 app.use(fileUpload());
+app.listen(3000);
 // End of configuration for server
 
 //Function for auth users
@@ -91,12 +88,43 @@ app.get("/people", checkAuth, function (req, res) {
   });
 });
 
-// ---> Routes for pages in posts (get / post)
-app.get("/new_post", checkAuth, function (req, res) {
-  res.render("post/new_post", { activePage: "new_post" });
+app.post("/search", checkAuth, function (req, res) {
+  let searchLine = req.body.searchLine;
+  let searchLineName;
+  let searchLineSurname;
+  if (searchLine.indexOf(" ") == -1) {
+    searchLineName = searchLine;
+  } else {
+    searchLineName = searchLine.substring(0, searchLine.indexOf(" "));
+    searchLineSurname = searchLine.substring(searchLine.indexOf(" ") + 1);
+  }
+
+  let sql = `SELECT * FROM user WHERE name LIKE '%${searchLineName}%' AND surname LIKE '%${searchLineSurname}%'`;
+
+  if (searchLineName == undefined) {
+    data = [searchLineSurname];
+    sql = `SELECT * FROM user WHERE surname LIKE '%${searchLineSurname}%'`;
+  }
+  if (searchLineSurname == undefined) {
+    sql = `SELECT * FROM user WHERE name LIKE '%${searchLineName}%'`;
+  }
+
+  db.all(sql, [], (err, rows) => {
+    if (err) {
+      res.status(400);
+      res.send("database error:" + err.message);
+      return;
+    }
+    res.render("searchResult", { activePage: "people", users: rows });
+  });
 });
 
-app.post("/new_post", function (req, res) {
+// ---> Routes for pages in posts (get / post)
+app.get("/new_post", checkAuth, function (req, res) {
+  res.render("new_post", { activePage: "new_post" });
+});
+
+app.post("/new_post", function async(req, res) {
   var data = [req.body.title, req.session.userId, req.body.body];
   var sql = "INSERT INTO post (title, user_id, body) VALUES (?,?,?)";
   db.run(sql, data, function (err, result) {
@@ -109,49 +137,7 @@ app.post("/new_post", function (req, res) {
   });
 });
 
-app.get("/posts/:id/show", function (req, res) {
-  var sql = "SELECT * FROM post WHERE id = ?";
-  var params = [req.params.id];
-
-  var sql_comment = "SELECT * FROM comment WHERE post_id = ?";
-
-  db.get(sql, params, (err, post_row) => {
-    if (err) {
-      res.status(400);
-      res.send("database error:" + err.message);
-      return;
-    }
-
-    db.all(sql_comment, params, (err, comment_row) => {
-      if (err) {
-        res.status(400);
-        res.send("database error:" + err.message);
-        return;
-      }
-
-      res.render("post/show_post", {
-        post: post_row,
-        comment: comment_row,
-        activePage: "posts",
-      });
-    });
-  });
-});
-
-app.post("/posts/:id/show", function (req, res) {
-  var data = [req.body.author, req.body.message, req.params.id];
-  var sql = "INSERT INTO comment (author, message, post_id) VALUES (?,?,?)";
-  db.run(sql, data, function (err, result) {
-    if (err) {
-      res.status(400);
-      res.send("database error:" + err.message);
-      return;
-    }
-    res.redirect("/posts/" + req.params.id + "/show");
-  });
-});
-
-app.get("/posts/:id/edit", function (req, res) {
+app.get("/posts/:id/edit", checkAuth, function (req, res) {
   var sql = "SELECT * FROM post WHERE id = ?";
   var params = [req.params.id];
   db.get(sql, params, (err, row) => {
@@ -160,7 +146,7 @@ app.get("/posts/:id/edit", function (req, res) {
       res.send("database error:" + err.message);
       return;
     }
-    res.render("post/edit_post", { post: row, activePage: "posts" });
+    res.render("edit_post", { post: row, activePage: "posts" });
   });
 });
 
@@ -183,7 +169,7 @@ app.post("/posts/:id/edit", function (req, res) {
   );
 });
 
-app.get("/posts/:id/delete", function (req, res) {
+app.get("/posts/:id/delete", checkAuth, function (req, res) {
   var sql = "DELETE FROM post WHERE id = ?";
   var params = [req.params.id];
   db.get(sql, params, (err, row) => {
@@ -192,7 +178,7 @@ app.get("/posts/:id/delete", function (req, res) {
       res.send("database error:" + err.message);
       return;
     }
-    res.redirect("/posts");
+    res.redirect("/");
   });
 });
 // ---> End of routes for pages in posts
@@ -279,7 +265,7 @@ app.get("/profile", checkAuth, function (req, res) {
   res.render("profile", { activePage: "profile" });
 });
 
-app.post("/profile", checkAuth, function (req, res) {
+app.post("/profile", function (req, res) {
   bcrypt.hash(req.body.password, 10, function (err, hash) {
     var sql = `UPDATE user SET
     name = COALESCE(?,name),
@@ -293,7 +279,7 @@ app.post("/profile", checkAuth, function (req, res) {
         res.send("database error:" + err.message);
         return;
       }
-      res.render("user/profile_answer", { activePage: "profile" });
+      res.render("profile_answer", { activePage: "profile" });
     });
   });
 });
@@ -314,6 +300,11 @@ app.get("/user/:id", checkAuth, function (req, res) {
         res.send("database error:" + err.message);
         return;
       }
+
+      if (rows2.id == req.session.userId) {
+        res.redirect("/");
+        return;
+      }
       res.render("user", { activePage: "profile", posts: rows, user: rows2 });
     });
   });
@@ -324,5 +315,3 @@ app.get("/logout", function (req, res) {
   req.session.loggedIn = false;
   res.redirect("/login");
 });
-
-app.listen(3000);

@@ -27,22 +27,6 @@ const db = new sqlite3.Database(DBSOURCE, (err) => {
     );
 
     db.run(
-      `CREATE TABLE comment (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      author text,
-      message text,
-      post_id text
-      )`,
-      (err) => {
-        if (err) {
-          console.log("Table comment id already created:");
-        } else {
-          console.log("Table comment is created");
-        }
-      }
-    );
-
-    db.run(
       `CREATE TABLE user (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name text,
