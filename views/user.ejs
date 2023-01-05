@@ -6,17 +6,28 @@
       <%- include("partials/navbar.ejs") %>
       <h1>Profile</h1>
       <div class="profile-block">
-        <img class="avatar" src="/img/<%- currentUser.avatar_name %>" alt="" />
-        <h5><%- currentUser.name %> <%- currentUser.surname %></h5>
+        <img class="avatar" src="/img/<%- user.avatar_name %>" alt="" />
+        <h5><%- user.name %> <%- user.surname %></h5>
       </div>
       <hr />
       <div class="posts">
         <h1>Posts</h1>
-        <a href="/new_post" class="btn btn-success">Create New Post</a>
         <% if (posts !== undefined) {posts.forEach(function(post) { %>
         <div class="post mt-3">
           <div class="control">
             <h5><%- post["title"] %></h5>
+            <div>
+              <a
+                href="/posts/<%- post['id'] %>/edit"
+                class="btn btn-success mt-1"
+                >Edit</a
+              >
+              <a
+                href="/posts/<%- post['id'] %>/delete"
+                class="btn btn-danger mt-1"
+                >Delete</a
+              >
+            </div>
           </div>
           <p><%- post["body"] %></p>
         </div>

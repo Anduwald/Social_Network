@@ -7,7 +7,7 @@
 
       <form method="post" action="/new_post">
         <div class="form-group">
-          <label for="name">Title</label>
+          <label for="title">Title</label>
           <input
             type="text"
             name="title"
@@ -17,26 +17,8 @@
             required
           />
         </div>
-        <div class="form-group">
-          <label for="name">Author</label>
-          <input
-            type="text"
-            name="author"
-            class="form-control"
-            id="author"
-            placeholder="Enter title"
-            required
-          />
-        </div>
         <div class="form-group mt-2">
-          <label for="category" class="form-label">Category</label>
-          <select name="category" class="form-select">
-            <option>Development</option>
-            <option>Design</option>
-          </select>
-        </div>
-        <div class="form-group mt-2">
-          <label for="message">Body</label>
+          <label for="body">Body</label>
           <textarea
             name="body"
             class="form-control"
