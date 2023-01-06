@@ -1,18 +1,8 @@
-// Structure of app.js file
-// Dependencies
-// Configuration for server
-// Function for auth users
-// Routes (get / post)
-// ->Routes for nav line
-// --->Routes for post
-// ->Routes for nav line (continue)
-
 const express = require("express");
 const app = express();
 const db = require("./database.js");
 const bcrypt = require("bcrypt");
 const session = require("express-session");
-const path = require("path");
 const fileUpload = require("express-fileupload");
 const { v4: uuidv4 } = require("uuid");
 
@@ -85,6 +75,32 @@ app.get("/people", checkAuth, function (req, res) {
       return;
     }
     res.render("people", { activePage: "people", users: rows });
+  });
+});
+
+app.get("/user/:id", checkAuth, function (req, res) {
+  let sql = "SELECT * FROM post where user_id = ?";
+  db.all(sql, [req.params.id], (err, rows) => {
+    if (err) {
+      res.status(400);
+      res.send("database error:" + err.message);
+      return;
+    }
+
+    let sql2 = "SELECT * FROM user where id =?";
+    db.get(sql2, [req.params.id], (err, rows2) => {
+      if (err) {
+        res.status(400);
+        res.send("database error:" + err.message);
+        return;
+      }
+
+      if (rows2.id == req.session.userId) {
+        res.redirect("/");
+        return;
+      }
+      res.render("user", { activePage: "profile", posts: rows, user: rows2 });
+    });
   });
 });
 
@@ -206,7 +222,7 @@ app.post("/login", function (req, res) {
     bcrypt.compare(req.body.password, row["password"], function (err, hashRes) {
       if (hashRes === false) {
         error = "Wrong email or password";
-        var data = [failed_count, req.body.email];
+        var data = [req.body.email];
         res.render("login", { activePage: "login", error: error });
         return;
       }
@@ -245,7 +261,7 @@ app.post("/register", function (req, res) {
       req.body.email,
       hash,
     ];
-    db.all(sql, data, function (err, result) {
+    db.get(sql, data, function (err, result) {
       if (err) {
         error = "Email already used !";
         res.status(400);
@@ -280,32 +296,6 @@ app.post("/profile", function (req, res) {
         return;
       }
       res.render("profile_answer", { activePage: "profile" });
-    });
-  });
-});
-
-app.get("/user/:id", checkAuth, function (req, res) {
-  let sql = "SELECT * FROM post where user_id = ?";
-  db.all(sql, [req.params.id], (err, rows) => {
-    if (err) {
-      res.status(400);
-      res.send("database error:" + err.message);
-      return;
-    }
-
-    let sql2 = "SELECT * FROM user where id =?";
-    db.get(sql2, [req.params.id], (err, rows2) => {
-      if (err) {
-        res.status(400);
-        res.send("database error:" + err.message);
-        return;
-      }
-
-      if (rows2.id == req.session.userId) {
-        res.redirect("/");
-        return;
-      }
-      res.render("user", { activePage: "profile", posts: rows, user: rows2 });
     });
   });
 });
